@@ -1,0 +1,10 @@
+<% 
+Rails.logger.info("primo starting view")
+linkbuilder = PrimoLinkBuilder.new(record)
+%>
+
+  <a class="btn btn-default page_action" target="_blank" href="<%=linkbuilder.build_link%>">
+<i class="fa fa-external-link fa-3x"></i><br/><%=t('primo.request')%></a>
+
+
+
