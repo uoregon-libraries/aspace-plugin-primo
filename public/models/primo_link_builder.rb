@@ -11,14 +11,17 @@ class PrimoLinkBuilder
     @record['json']['user_defined']['string_2']
   end
 
+  #not trying to use this yet.
   def hide_link?
     mms.nil?
   end
 
   def build_link
+    return "#{AppConfig[:public_url]}/500.html" if mms.nil?
+
     url = URI(ENV['APIBASEURL'] + '/primo/v1/search?' + queryParams)
     response = request(url)
-    return nil if response.nil?
+    return "#{AppConfig[:public_url]}/500.html" if response.nil?
 
     json = JSON.parse(response.body)['docs'][0]["@id"]
     docid = json.split('/pnxs/L/').last
