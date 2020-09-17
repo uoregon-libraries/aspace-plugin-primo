@@ -9,6 +9,8 @@ class PrimoLinkBuilder
 
   def mms
     @record['json']['user_defined']['string_2']
+  rescue
+    return nil
   end
 
   #not trying to use this yet.
