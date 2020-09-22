@@ -7,22 +7,37 @@ class PrimoLinkBuilder
     @record = record
   end
 
-  def mms
-    @record['json']['user_defined']['string_2']
+  def mms(resource_record=@record)
+    @mms_id ||= resource_record['json']['user_defined']['string_2']
   rescue
     return nil
   end
 
-  #not trying to use this yet.
-  def hide_link?
-    mms.nil?
+  def is_archival_object
+    @record['json']['uri'].include? 'archival_object'
+  end
+
+  def resource_id
+    @record['json']['resource']['ref']
+  end
+
+  def archivesspace
+    @archivesspace ||= ArchivesSpaceClient.new
+  end
+
+  def get_resource_record
+    archivesspace.get_record(resource_id)
+  end
+
+  def get_link
+    resource_record = is_archival_object ? get_resource_record : @record
+    return "#{AppConfig[:public_url]}/500.html" if mms(resource_record).nil?
+
+    build_link
   end
 
   def build_link
-    return "#{AppConfig[:public_url]}/500.html" if mms.nil?
-
-    url = URI(ENV['APIBASEURL'] + '/primo/v1/search?' + queryParams)
-    response = request(url)
+    response = request(query_url)
     return "#{AppConfig[:public_url]}/500.html" if response.nil?
 
     json = JSON.parse(response.body)['docs'][0]["@id"]
@@ -30,7 +45,11 @@ class PrimoLinkBuilder
     "#{ENV['PRIMOBASEURL']}/primo-explore/fulldisplay?" + viewParams(docid)
   rescue StandardError => e
     Rails.logger.warn("from PrimoLinkBuilder: #{e.message}")
-    return nil
+    return "#{AppConfig[:public_url]}/500.html"
+  end
+
+  def query_url
+    URI(ENV['APIBASEURL'] + '/primo/v1/search?' + queryParams)
   end
 
   def viewParams(docid)
