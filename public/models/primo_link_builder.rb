@@ -3,13 +3,15 @@ require 'json'
 class PrimoLinkBuilder
   include PrimoRequest
 
+  RESPOND_500 = "#{AppConfig[:public_url]}/500.html"
+
   def initialize(record)
     @record = record
   end
 
   def mms(resource_record=@record)
     @mms_id ||= resource_record['json']['user_defined']['string_2']
-  rescue
+  rescue StandardError
     return nil
   end
 
@@ -26,26 +28,33 @@ class PrimoLinkBuilder
   end
 
   def get_resource_record
-    archivesspace.get_record(resource_id)
+    return archivesspace.get_record(resource_id) if is_archival_object
+
+    return @record
+  rescue StandardError => e
+    Rails.logger.warn("from PrimoLinkBuilder: #{e.message}")
+    return nil
   end
 
   def get_link
-    resource_record = is_archival_object ? get_resource_record : @record
-    return "#{AppConfig[:public_url]}/500.html" if mms(resource_record).nil?
+    resource_record = get_resource_record
+    return RESPOND_500 if resource_record.nil?
+
+    return RESPOND_500 if mms(resource_record).nil?
 
     build_link
   end
 
   def build_link
     response = request(query_url)
-    return "#{AppConfig[:public_url]}/500.html" if response.nil?
+    return RESPOND_500 if response.nil?
 
     json = JSON.parse(response.body)['docs'][0]["@id"]
     docid = json.split('/pnxs/L/').last
     "#{ENV['PRIMOBASEURL']}/primo-explore/fulldisplay?" + viewParams(docid)
   rescue StandardError => e
     Rails.logger.warn("from PrimoLinkBuilder: #{e.message}")
-    return "#{AppConfig[:public_url]}/500.html"
+    return RESPOND_500
   end
 
   def query_url
