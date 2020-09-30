@@ -51,20 +51,20 @@ class PrimoLinkBuilder
 
     json = JSON.parse(response.body)['docs'][0]["@id"]
     docid = json.split('/pnxs/L/').last
-    "#{ENV['PRIMOBASEURL']}/primo-explore/fulldisplay?" + viewParams(docid)
+    "#{AppConfig[:primo_base_url]}/primo-explore/fulldisplay?" + viewParams(docid)
   rescue StandardError => e
     Rails.logger.warn("from PrimoLinkBuilder: #{e.message}")
     return RESPOND_500
   end
 
   def query_url
-    URI(ENV['APIBASEURL'] + '/primo/v1/search?' + queryParams)
+    URI(AppConfig[:api_base_url] + '/primo/v1/search?' + queryParams)
   end
 
   def viewParams(docid)
     "docid=#{ERB::Util.url_encode(docid)}&" +
     "context=L&" +
-    "vid=#{ERB::Util.url_encode(ENV['VID_VIEW'])}&" +
+    "vid=#{ERB::Util.url_encode(AppConfig[:vid_view])}&" +
     "tab=default_tab&" +
     "search_scope=default_scope&" +
     "adaptor=Local%20Search%20Engine&" +
@@ -72,12 +72,12 @@ class PrimoLinkBuilder
   end
 
   def queryParams
-    "inst=#{ERB::Util.url_encode(ENV['INST'])}&" +
-    "vid=#{ERB::Util.url_encode(ENV['VID_SEARCH'])}&" +
+    "inst=#{ERB::Util.url_encode(AppConfig[:inst])}&" +
+    "vid=#{ERB::Util.url_encode(AppConfig[:vid_search])}&" +
     "tab=default_tab&" +
     "scope=default_scope&" +
     "q=any,contains,#{ERB::Util.url_encode(mms)}&" +
-    "apikey=#{ERB::Util.url_encode(ENV['APIKEY'])}"
+    "apikey=#{ERB::Util.url_encode(AppConfig[:primo_apikey])}"
   end
 
   def request(url)
