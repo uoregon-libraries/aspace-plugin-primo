@@ -46,23 +46,14 @@ class PrimoLinkBuilder
   end
 
   def build_link
-    response = request(query_url)
-    return RESPOND_500 if response.nil?
-
-    json = JSON.parse(response.body)['docs'][0]["@id"]
-    docid = json.split('/pnxs/L/').last
-    "#{AppConfig[:primo_base_url]}/primo-explore/fulldisplay?" + viewParams(docid)
+    "#{AppConfig[:primo_base_url]}/discovery/fulldisplay?" + viewParams
   rescue StandardError => e
     Rails.logger.warn("from PrimoLinkBuilder: #{e.message}")
     return RESPOND_500
   end
 
-  def query_url
-    URI(AppConfig[:api_base_url] + '/primo/v1/search?' + queryParams)
-  end
-
-  def viewParams(docid)
-    "docid=#{ERB::Util.url_encode(docid)}&" +
+  def viewParams
+    "docid=alma#{mms}&" +
     "context=L&" +
     "vid=#{ERB::Util.url_encode(AppConfig[:vid_view])}&" +
     "tab=default_tab&" +
@@ -71,14 +62,6 @@ class PrimoLinkBuilder
     "lang=en_US"
   end
 
-  def queryParams
-    "inst=#{ERB::Util.url_encode(AppConfig[:inst])}&" +
-    "vid=#{ERB::Util.url_encode(AppConfig[:vid_search])}&" +
-    "tab=default_tab&" +
-    "scope=default_scope&" +
-    "q=any,contains,#{ERB::Util.url_encode(mms)}&" +
-    "apikey=#{ERB::Util.url_encode(AppConfig[:primo_apikey])}"
-  end
 
   def request(url)
     get(url) do |response|
